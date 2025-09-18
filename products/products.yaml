@@ -31,17 +31,11 @@ spec:
         }
         
         type Query {
-          products: [Product]
-            # A @connect directive defines the API data source of a GraphQL schema field.
+          product(id: ID!): Product
             @connect(
               source: "ecomm"
-              http: { GET: "/products" }
-              selection: """
-              $.products {
-                id
-                name
-                description
-              }
-              """
+              http: { GET: "/products/{$args.id}" }
+              selection: "id name description"
+              entity: true
             )
       }
