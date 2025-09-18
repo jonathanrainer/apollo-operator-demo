@@ -1,0 +1,122 @@
+name: Setup Repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      graphRef:
+        description: 'GraphRef (e.g., my-graph@main)'
+        required: true
+        type: string
+
+jobs:
+  setup:
+    name: "Setup Repository"
+    runs-on: ubuntu-latest
+    env:
+      REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Validate inputs
+        run: |
+          echo "Setting up repository with GraphRef: ${{ github.event.inputs.graphRef }}"
+          
+          # Validate graphRef format (basic validation)
+          if [[ ! "${{ github.event.inputs.graphRef }}" =~ ^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+$ ]]; then
+            echo "Error: graphRef must be in format 'graph-name@variant' (e.g., 'my-graph@main')"
+            exit 1
+          fi
+
+      - name: Update graph reference in supergraph schema
+        run: |
+          echo "Updating graphRef in retail-supergraph/supergraph_schema.yaml..."
+          yq eval '.spec.graphRef = "${{ github.event.inputs.graphRef }}"' -i retail-supergraph/supergraph_schema.yaml
+          echo "✓ Updated supergraph schema"
+
+      - name: Update repository URLs in ArgoCD applications
+        run: |
+          echo "Updating repository URLs in configuration files..."
+          
+          # Update bootstrap.yaml
+          yq eval '(select(.kind == "Application") | .spec.source.repoURL) = "${{ env.REPO_URL }}"' -i bootstrap.yaml
+          echo "✓ Updated bootstrap.yaml"
+          
+          # Update apps/reviews.yaml
+          yq eval '.spec.source.repoURL = "${{ env.REPO_URL }}"' -i apps/reviews.yaml
+          echo "✓ Updated apps/reviews.yaml"
+          
+          # Update apps/retail-supergraph.yaml
+          yq eval '.spec.source.repoURL = "${{ env.REPO_URL }}"' -i apps/retail-supergraph.yaml
+          echo "✓ Updated apps/retail-supergraph.yaml"
+          
+          # Update apps/products.yaml
+          yq eval '.spec.source.repoURL = "${{ env.REPO_URL }}"' -i apps/products.yaml
+          echo "✓ Updated apps/products.yaml"
+
+      - name: Verify changes
+        run: |
+          echo "Verifying all changes were applied correctly..."
+          echo ""
+          echo "=== GraphRef ==="
+          echo "retail-supergraph/supergraph_schema.yaml: $(yq eval '.spec.graphRef' retail-supergraph/supergraph_schema.yaml)"
+          echo ""
+          echo "=== Repository URLs ==="
+          echo "bootstrap.yaml: $(yq eval 'select(.kind == "Application") | .spec.source.repoURL' bootstrap.yaml)"
+          echo "apps/reviews.yaml: $(yq eval '.spec.source.repoURL' apps/reviews.yaml)"
+          echo "apps/retail-supergraph.yaml: $(yq eval '.spec.source.repoURL' apps/retail-supergraph.yaml)"
+          echo "apps/products.yaml: $(yq eval '.spec.source.repoURL' apps/products.yaml)"
+          echo ""
+          echo "Setup completed successfully! 🎉"
+
+      - name: Create pull request with changes
+        id: create_pr
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Setup repository: Update graphRef to '${{ github.event.inputs.graphRef }}' and repoUrl to '${{ env.REPO_URL }}'"
+          title: "🚀 Setup Repository Configuration"
+          body: |
+            ## Repository Setup Complete!
+
+            This pull request configures your repository copy with your custom settings.
+
+            ### Configuration Applied:
+            - **GraphRef:** `${{ github.event.inputs.graphRef }}`
+            - **Repository URL:** `${{ env.REPO_URL }}` (auto-detected)
+
+            ### Files Updated:
+            - `retail-supergraph/supergraph_schema.yaml` - Updated graphRef
+            - `bootstrap.yaml` - Updated repository URL
+            - `apps/reviews.yaml` - Updated repository URL
+            - `apps/retail-supergraph.yaml` - Updated repository URL
+            - `apps/products.yaml` - Updated repository URL
+
+            ### Next Steps:
+            1. Review the changes in this pull request
+            2. Merge this PR when you're satisfied with the configuration
+            3. Your repository will be ready to use with your Apollo GraphOS setup!
+
+            ---
+            *This pull request was automatically created by the Setup Repository Template action.*
+          branch: setup/configure-repository
+          delete-branch: true
+          base: main
+
+      - name: Display result
+        run: |
+          if [[ "${{ steps.create_pr.outputs.pull-request-number }}" ]]; then
+            echo "✅ Pull request #${{ steps.create_pr.outputs.pull-request-number }} created successfully!"
+            echo "🔗 View it here: ${{ steps.create_pr.outputs.pull-request-url }}"
+            echo ""
+            echo "Repository configured with:"
+            echo "  • GraphRef: ${{ github.event.inputs.graphRef }}"
+            echo "  • Repository URL: ${{ env.REPO_URL }} (auto-detected)"
+          else
+            echo "ℹ️  No changes needed - repository is already configured with these values."
+          fi
