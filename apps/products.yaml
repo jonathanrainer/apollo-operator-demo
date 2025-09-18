@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     path: products
-    repoURL: https://my-repo-name.com
+    repoURL: https://github.com/jonathanrainer/apollo-operator-demo
   destination:
     server: "https://kubernetes.default.svc"
     namespace: apollo-operator
