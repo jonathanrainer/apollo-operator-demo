@@ -24,7 +24,7 @@ spec:
           http: { baseURL: "https://ecommerce.demo-api.apollo.dev/" }
         )
         
-        type Product {
+        type Product @key(fields: "id") {
           id: ID!
           name: String
           description: String
