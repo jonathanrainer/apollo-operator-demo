@@ -1,4 +1,4 @@
-apiVersion: apollographql.com/v1alpha1
+apiVersion: apollographql.com/v1alpha2
 kind: Subgraph
 metadata:
   name: reviews
