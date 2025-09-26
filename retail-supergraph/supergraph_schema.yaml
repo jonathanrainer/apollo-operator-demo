@@ -6,5 +6,5 @@ spec:
   selectors:
     - matchLabels:
         domain: retail
-  graphRef: mygraph@myref
+  graphRef: operator-test@jr-summit-demo
   suspend: false
