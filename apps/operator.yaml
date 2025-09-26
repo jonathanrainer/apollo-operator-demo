@@ -12,7 +12,7 @@ spec:
         - /spec/names/shortNames
         - /spec/names/categories
       jqPathExpressions:
-        - .spec.versions[]?.additionalPrinterColumns[]?
+        - .spec.versions[]?.additionalPrinterColumns
   source:
     chart: operator-chart
     repoURL: registry-1.docker.io/apollograph
