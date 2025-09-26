@@ -23,8 +23,6 @@ spec:
         kind: CustomResourceDefinitions
         jsonPointers:
           - /spec/names/shortNames
-          - /spec/names/categories
-          - /spec/versions[].additionalPrinterColumns
   destination:
     server: "https://kubernetes.default.svc"
     namespace: apollo-operator
