@@ -11,7 +11,8 @@ spec:
       jsonPointers:
         - /spec/names/shortNames
         - /spec/names/categories
-        - /spec/versions/*/additionalPrinterColumns
+      jqPathExpressions:
+        - .spec.versions[]?.additionalPrinterColumns[]?
   source:
     chart: operator-chart
     repoURL: registry-1.docker.io/apollograph
